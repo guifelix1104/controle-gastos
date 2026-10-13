@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import models, schemas
+from app.categorizador import descobrir_categoria
 from app.database import get_db
 
 router = APIRouter(prefix="/transacoes", tags=["Transações"])
@@ -12,11 +13,25 @@ def validar_categoria(db: Session, categoria_id: int | None):
         raise HTTPException(status_code=400, detail="Categoria não existe")
 
 
+def resolver_categoria(db: Session, dados: schemas.TransacaoCriar) -> int | None:
+    if dados.categoria_id is not None:
+        return dados.categoria_id
+
+    if dados.tipo == "gasto":
+        categoria = descobrir_categoria(db, dados.descricao)
+        return categoria.id if categoria else None
+
+    return None
+
+
 @router.post("/", response_model=schemas.TransacaoSaida, status_code=201)
 def criar(dados: schemas.TransacaoCriar, db: Session = Depends(get_db)):
     validar_categoria(db, dados.categoria_id)
 
-    transacao = models.Transacao(**dados.model_dump())
+    valores = dados.model_dump()
+    valores["categoria_id"] = resolver_categoria(db, dados)
+
+    transacao = models.Transacao(**valores)
     db.add(transacao)
     db.commit()
     db.refresh(transacao)
@@ -48,7 +63,10 @@ def atualizar(
 
     validar_categoria(db, dados.categoria_id)
 
-    for campo, valor in dados.model_dump().items():
+    valores = dados.model_dump()
+    valores["categoria_id"] = resolver_categoria(db, dados)
+
+    for campo, valor in valores.items():
         setattr(transacao, campo, valor)
 
     db.commit()

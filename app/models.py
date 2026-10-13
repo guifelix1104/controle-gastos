@@ -29,6 +29,10 @@ class Transacao(Base):
     categoria_id: Mapped[int | None] = mapped_column(ForeignKey("categorias.id"))
     categoria: Mapped["Categoria | None"] = relationship(back_populates="transacoes")
 
+    @property
+    def categoria_nome(self) -> str | None:
+        return self.categoria.nome if self.categoria else None
+
 
 class Meta(Base):
     __tablename__ = "metas"

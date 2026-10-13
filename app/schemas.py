@@ -15,6 +15,7 @@ class TransacaoCriar(BaseModel):
 
 class TransacaoSaida(TransacaoCriar):
     id: int
+    categoria_nome: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
