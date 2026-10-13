@@ -1,9 +1,15 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app import models
 from app.database import Base, SessionLocal, engine
-from app.routers import categorias, transacoes
+from app.routers import categorias, resumo, transacoes
 from app.seed import criar_categorias_padrao
+
+PASTA_STATIC = Path(__file__).parent / "static"
 
 Base.metadata.create_all(bind=engine)
 
@@ -14,8 +20,11 @@ app = FastAPI(title="Controle de Gastos")
 
 app.include_router(transacoes.router)
 app.include_router(categorias.router)
+app.include_router(resumo.router)
+
+app.mount("/static", StaticFiles(directory=PASTA_STATIC), name="static")
 
 
-@app.get("/")
-def raiz():
-    return {"mensagem": "Controle de gastos funcionando!"}
+@app.get("/", include_in_schema=False)
+def pagina_inicial():
+    return FileResponse(PASTA_STATIC / "index.html")

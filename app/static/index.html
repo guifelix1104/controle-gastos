@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Gastos</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>Controle de Gastos</h1>
+    <input type="month" id="mes">
+  </header>
+
+  <main>
+    <section class="cards">
+      <div class="card">
+        <span>Renda</span>
+        <strong id="total-renda">R$ 0,00</strong>
+      </div>
+      <div class="card">
+        <span>Gastos</span>
+        <strong id="total-gastos">R$ 0,00</strong>
+      </div>
+      <div class="card">
+        <span>Saldo</span>
+        <strong id="saldo">R$ 0,00</strong>
+      </div>
+    </section>
+
+    <section class="painel">
+      <h2>Gastos por categoria</h2>
+      <p id="aviso-vazio" hidden>Nenhum gasto neste mês.</p>
+      <div class="grafico">
+        <canvas id="grafico"></canvas>
+      </div>
+    </section>
+
+    <section class="painel">
+      <h2>Nova transação</h2>
+      <form id="form-transacao">
+        <input type="text" id="descricao" placeholder="Descrição (ex: Uber)" maxlength="100" required>
+        <input type="number" id="valor" placeholder="Valor" step="0.01" min="0.01" required>
+        <select id="tipo">
+          <option value="gasto">Gasto</option>
+          <option value="renda">Renda</option>
+        </select>
+        <input type="date" id="data" required>
+        <label><input type="checkbox" id="fixa"> Fixa</label>
+        <button type="submit">Adicionar</button>
+      </form>
+      <p id="mensagem"></p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
