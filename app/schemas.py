@@ -20,6 +20,10 @@ class TransacaoSaida(TransacaoCriar):
     model_config = ConfigDict(from_attributes=True)
 
 
+class FixaAtualizar(BaseModel):
+    fixa: bool
+
+
 class CategoriaSaida(BaseModel):
     id: int
     nome: str

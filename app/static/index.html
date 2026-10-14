@@ -37,6 +37,16 @@
     </section>
 
     <section class="painel">
+      <div class="painel-topo">
+        <h2>Transações do mês</h2>
+        <button type="button" id="btn-gerar-fixas" class="secundario">Gerar gastos fixos do mês</button>
+      </div>
+      <p id="mensagem-fixas"></p>
+      <p id="aviso-sem-transacoes" class="vazio" hidden>Nenhuma transação neste mês.</p>
+      <ul id="lista-transacoes" class="lista"></ul>
+    </section>
+
+    <section class="painel">
       <h2>Metas</h2>
       <p id="aviso-sem-metas" class="vazio" hidden>Nenhuma meta cadastrada ainda.</p>
       <div id="lista-metas"></div>
@@ -61,7 +71,7 @@
           <option value="renda">Renda</option>
         </select>
         <input type="date" id="data" required>
-        <label><input type="checkbox" id="fixa"> Fixa</label>
+        <label><input type="checkbox" id="fixa"> Fixa (repete todo mês)</label>
         <button type="submit">Adicionar</button>
       </form>
       <p id="mensagem"></p>

@@ -4,6 +4,11 @@ const form = document.getElementById("form-transacao");
 const mensagem = document.getElementById("mensagem");
 const avisoVazio = document.getElementById("aviso-vazio");
 
+const listaTransacoes = document.getElementById("lista-transacoes");
+const avisoSemTransacoes = document.getElementById("aviso-sem-transacoes");
+const mensagemFixas = document.getElementById("mensagem-fixas");
+const botaoGerarFixas = document.getElementById("btn-gerar-fixas");
+
 const listaMetas = document.getElementById("lista-metas");
 const avisoSemMetas = document.getElementById("aviso-sem-metas");
 const formMeta = document.getElementById("form-meta");
@@ -106,6 +111,111 @@ async function carregarResumo() {
 
   desenharGrafico(dados.gastos_por_categoria);
 }
+
+/* ---------- Transações do mês ---------- */
+
+function criarLinhaTransacao(transacao) {
+  const ehRenda = transacao.tipo === "renda";
+  const linha = criarElemento("li", "linha");
+
+  linha.appendChild(
+    criarElemento("span", "linha-data", formatarData(transacao.data).slice(0, 5))
+  );
+
+  const descricao = criarElemento("span", "linha-descricao", transacao.descricao);
+  if (transacao.fixa) {
+    descricao.appendChild(criarElemento("span", "tag", "fixa"));
+  }
+  linha.appendChild(descricao);
+
+  const categoria = transacao.categoria_nome || (ehRenda ? "Renda" : "Sem categoria");
+  linha.appendChild(criarElemento("span", "linha-categoria", categoria));
+
+  const sinal = ehRenda ? "+" : "-";
+  linha.appendChild(
+    criarElemento(
+      "span",
+      ehRenda ? "valor-renda" : "valor-gasto",
+      `${sinal} ${formatarMoeda(transacao.valor)}`
+    )
+  );
+
+  const acoes = criarElemento("span", "linha-acoes");
+
+  if (transacao.fixa) {
+    const parar = criarElemento("button", "secundario pequeno", "Parar de repetir");
+    parar.type = "button";
+    parar.addEventListener("click", () => pararFixa(transacao.id));
+    acoes.appendChild(parar);
+  }
+
+  const excluir = criarElemento("button", "secundario pequeno", "Excluir");
+  excluir.type = "button";
+  excluir.addEventListener("click", () => excluirTransacao(transacao.id));
+  acoes.appendChild(excluir);
+
+  linha.appendChild(acoes);
+  return linha;
+}
+
+async function carregarTransacoes() {
+  const resposta = await fetch(`/transacoes/?mes=${inputMes.value}`);
+  const transacoes = await resposta.json();
+
+  listaTransacoes.replaceChildren();
+  avisoSemTransacoes.hidden = transacoes.length > 0;
+
+  for (const transacao of transacoes) {
+    listaTransacoes.appendChild(criarLinhaTransacao(transacao));
+  }
+}
+
+async function atualizarMes() {
+  await Promise.all([carregarResumo(), carregarTransacoes()]);
+}
+
+async function excluirTransacao(id) {
+  if (!confirm("Excluir esta transação?")) {
+    return;
+  }
+
+  const resposta = await fetch(`/transacoes/${id}`, { method: "DELETE" });
+  if (resposta.ok) {
+    atualizarMes();
+  }
+}
+
+async function pararFixa(id) {
+  const resposta = await fetch(`/transacoes/${id}/fixa`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fixa: false }),
+  });
+
+  if (resposta.ok) {
+    mensagemFixas.textContent = "Pronto: essa transação não será mais repetida nos próximos meses.";
+    atualizarMes();
+  }
+}
+
+botaoGerarFixas.addEventListener("click", async () => {
+  const resposta = await fetch(`/transacoes/gerar-fixas?mes=${inputMes.value}`, {
+    method: "POST",
+  });
+
+  if (!resposta.ok) {
+    mensagemFixas.textContent = "Não foi possível gerar os gastos fixos.";
+    return;
+  }
+
+  const dados = await resposta.json();
+  mensagemFixas.textContent =
+    dados.criadas === 0
+      ? "Nenhuma transação fixa nova para gerar neste mês."
+      : `${dados.criadas} transação(ões) fixa(s) criada(s) neste mês.`;
+
+  atualizarMes();
+});
 
 /* ---------- Metas ---------- */
 
@@ -257,17 +367,21 @@ form.addEventListener("submit", async (evento) => {
     form.reset();
     inputData.value = hojeISO();
     inputMes.value = criada.data.slice(0, 7);
-    carregarResumo();
+    atualizarMes();
   } else {
-    mensagem.textContent = "Erro ao adicionar. Confira os campos.";
+    const erro = await resposta.json();
+    mensagem.textContent = mensagemDeErro(erro);
   }
 });
 
-inputMes.addEventListener("change", carregarResumo);
+inputMes.addEventListener("change", () => {
+  mensagemFixas.textContent = "";
+  atualizarMes();
+});
 
 /* ---------- Início ---------- */
 
 inputMes.value = mesAtual();
 inputData.value = hojeISO();
-carregarResumo();
+atualizarMes();
 carregarMetas();
