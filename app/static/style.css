@@ -112,4 +112,64 @@ button:hover {
   .cards {
     grid-template-columns: 1fr;
   }
+}.meta {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.meta h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.barra {
+  background: #e2e8f0;
+  border-radius: 999px;
+  height: 12px;
+  overflow: hidden;
+}
+
+.barra-preenchida {
+  background: #2f855a;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+.meta-valores {
+  margin: 8px 0 4px;
+  font-weight: bold;
+}
+
+.meta-info {
+  margin: 0 0 10px;
+  color: #555;
+  font-size: 14px;
+}
+
+.meta-acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button.secundario {
+  background: #e2e8f0;
+  color: #333;
+}
+
+button.secundario:hover {
+  background: #cbd5e0;
+}
+
+.vazio {
+  color: #666;
+}
+
+#form-meta {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
 }

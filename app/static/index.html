@@ -37,6 +37,21 @@
     </section>
 
     <section class="painel">
+      <h2>Metas</h2>
+      <p id="aviso-sem-metas" class="vazio" hidden>Nenhuma meta cadastrada ainda.</p>
+      <div id="lista-metas"></div>
+
+      <form id="form-meta">
+        <input type="text" id="meta-nome" placeholder="Meta (ex: Viagem pro Chile)" maxlength="100" required>
+        <input type="number" id="meta-alvo" placeholder="Valor alvo" step="0.01" min="0.01" required>
+        <input type="number" id="meta-guardado" placeholder="Já guardado (opcional)" step="0.01" min="0">
+        <input type="date" id="meta-prazo" required>
+        <button type="submit">Criar meta</button>
+      </form>
+      <p id="mensagem-meta"></p>
+    </section>
+
+    <section class="painel">
       <h2>Nova transação</h2>
       <form id="form-transacao">
         <input type="text" id="descricao" placeholder="Descrição (ex: Uber)" maxlength="100" required>

@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app import models
 from app.database import Base, SessionLocal, engine
-from app.routers import categorias, resumo, transacoes
+from app.routers import categorias, metas, resumo, transacoes
 from app.seed import criar_categorias_padrao
 
 PASTA_STATIC = Path(__file__).parent / "static"
@@ -21,6 +21,7 @@ app = FastAPI(title="Controle de Gastos")
 app.include_router(transacoes.router)
 app.include_router(categorias.router)
 app.include_router(resumo.router)
+app.include_router(metas.router)
 
 app.mount("/static", StaticFiles(directory=PASTA_STATIC), name="static")
 

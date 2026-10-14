@@ -4,6 +4,11 @@ const form = document.getElementById("form-transacao");
 const mensagem = document.getElementById("mensagem");
 const avisoVazio = document.getElementById("aviso-vazio");
 
+const listaMetas = document.getElementById("lista-metas");
+const avisoSemMetas = document.getElementById("aviso-sem-metas");
+const formMeta = document.getElementById("form-meta");
+const mensagemMeta = document.getElementById("mensagem-meta");
+
 const CORES = {
   "Moradia": "#4e79a7",
   "Alimentação": "#f28e2b",
@@ -21,6 +26,11 @@ function formatarMoeda(valor) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function formatarData(iso) {
+  const [ano, mes, dia] = iso.split("-");
+  return `${dia}/${mes}/${ano}`;
+}
+
 function mesAtual() {
   const hoje = new Date();
   const mes = String(hoje.getMonth() + 1).padStart(2, "0");
@@ -31,6 +41,23 @@ function hojeISO() {
   const dia = String(new Date().getDate()).padStart(2, "0");
   return `${mesAtual()}-${dia}`;
 }
+
+function criarElemento(tag, classe, texto) {
+  const elemento = document.createElement(tag);
+  if (classe) {
+    elemento.className = classe;
+  }
+  if (texto !== undefined) {
+    elemento.textContent = texto;
+  }
+  return elemento;
+}
+
+function mensagemDeErro(erro) {
+  return typeof erro.detail === "string" ? erro.detail : "Confira os campos.";
+}
+
+/* ---------- Resumo do mês e gráfico ---------- */
 
 function desenharGrafico(categorias) {
   const vazio = categorias.length === 0;
@@ -80,6 +107,130 @@ async function carregarResumo() {
   desenharGrafico(dados.gastos_por_categoria);
 }
 
+/* ---------- Metas ---------- */
+
+function textoDaMeta(meta) {
+  if (meta.status === "concluida") {
+    return "Meta concluída! 🎉";
+  }
+  if (meta.status === "vencida") {
+    return `Prazo vencido em ${formatarData(meta.prazo)}. Ainda faltam ${formatarMoeda(meta.faltante)}.`;
+  }
+  const unidade = meta.meses_restantes === 1 ? "mês" : "meses";
+  return `Faltam ${formatarMoeda(meta.faltante)}. Guarde ${formatarMoeda(meta.guardar_por_mes)} por mês até ${formatarData(meta.prazo)} (${meta.meses_restantes} ${unidade}).`;
+}
+
+function criarCartaoMeta(meta) {
+  const cartao = criarElemento("div", "meta");
+  cartao.appendChild(criarElemento("h3", "", meta.nome));
+
+  const barra = criarElemento("div", "barra");
+  const preenchida = criarElemento("div", "barra-preenchida");
+  preenchida.style.width = `${meta.progresso}%`;
+  barra.appendChild(preenchida);
+  cartao.appendChild(barra);
+
+  cartao.appendChild(
+    criarElemento(
+      "p",
+      "meta-valores",
+      `${formatarMoeda(meta.valor_guardado)} de ${formatarMoeda(meta.valor_alvo)} (${meta.progresso.toFixed(0)}%)`
+    )
+  );
+  cartao.appendChild(criarElemento("p", "meta-info", textoDaMeta(meta)));
+
+  const acoes = criarElemento("div", "meta-acoes");
+
+  const campo = criarElemento("input");
+  campo.type = "number";
+  campo.step = "0.01";
+  campo.min = "0.01";
+  campo.placeholder = "Valor guardado";
+
+  const botaoGuardar = criarElemento("button", "", "Guardar");
+  botaoGuardar.type = "button";
+  botaoGuardar.addEventListener("click", () => depositar(meta.id, campo.value));
+
+  const botaoExcluir = criarElemento("button", "secundario", "Excluir");
+  botaoExcluir.type = "button";
+  botaoExcluir.addEventListener("click", () => excluirMeta(meta.id));
+
+  acoes.appendChild(campo);
+  acoes.appendChild(botaoGuardar);
+  acoes.appendChild(botaoExcluir);
+  cartao.appendChild(acoes);
+
+  return cartao;
+}
+
+async function carregarMetas() {
+  const resposta = await fetch("/metas/");
+  const metas = await resposta.json();
+
+  listaMetas.replaceChildren();
+  avisoSemMetas.hidden = metas.length > 0;
+
+  for (const meta of metas) {
+    listaMetas.appendChild(criarCartaoMeta(meta));
+  }
+}
+
+async function depositar(id, valor) {
+  const numero = parseFloat(valor);
+  if (!numero || numero <= 0) {
+    return;
+  }
+
+  const resposta = await fetch(`/metas/${id}/depositar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ valor: numero }),
+  });
+
+  if (resposta.ok) {
+    carregarMetas();
+  }
+}
+
+async function excluirMeta(id) {
+  if (!confirm("Excluir esta meta?")) {
+    return;
+  }
+
+  const resposta = await fetch(`/metas/${id}`, { method: "DELETE" });
+  if (resposta.ok) {
+    carregarMetas();
+  }
+}
+
+formMeta.addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+
+  const corpo = {
+    nome: document.getElementById("meta-nome").value,
+    valor_alvo: parseFloat(document.getElementById("meta-alvo").value),
+    valor_guardado: parseFloat(document.getElementById("meta-guardado").value) || 0,
+    prazo: document.getElementById("meta-prazo").value,
+  };
+
+  const resposta = await fetch("/metas/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(corpo),
+  });
+
+  if (resposta.ok) {
+    mensagemMeta.textContent = "Meta criada!";
+    formMeta.reset();
+    carregarMetas();
+  } else {
+    const erro = await resposta.json();
+    mensagemMeta.textContent = mensagemDeErro(erro);
+  }
+});
+
+/* ---------- Nova transação ---------- */
+
 form.addEventListener("submit", async (evento) => {
   evento.preventDefault();
 
@@ -114,6 +265,9 @@ form.addEventListener("submit", async (evento) => {
 
 inputMes.addEventListener("change", carregarResumo);
 
+/* ---------- Início ---------- */
+
 inputMes.value = mesAtual();
 inputData.value = hojeISO();
 carregarResumo();
+carregarMetas();
