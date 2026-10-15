@@ -4,6 +4,10 @@ const form = document.getElementById("form-transacao");
 const mensagem = document.getElementById("mensagem");
 const avisoVazio = document.getElementById("aviso-vazio");
 
+const tituloForm = document.getElementById("titulo-form");
+const botaoSalvar = document.getElementById("btn-salvar");
+const botaoCancelar = document.getElementById("btn-cancelar");
+
 const listaTransacoes = document.getElementById("lista-transacoes");
 const avisoSemTransacoes = document.getElementById("aviso-sem-transacoes");
 const mensagemFixas = document.getElementById("mensagem-fixas");
@@ -26,6 +30,7 @@ const CORES = {
 };
 
 let grafico = null;
+let idEditando = null;
 
 function formatarMoeda(valor) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -112,6 +117,41 @@ async function carregarResumo() {
   desenharGrafico(dados.gastos_por_categoria);
 }
 
+/* ---------- Edição de transação ---------- */
+
+function iniciarEdicao(transacao) {
+  idEditando = transacao.id;
+
+  document.getElementById("descricao").value = transacao.descricao;
+  document.getElementById("valor").value = transacao.valor;
+  document.getElementById("tipo").value = transacao.tipo;
+  inputData.value = transacao.data;
+  document.getElementById("fixa").checked = transacao.fixa;
+
+  tituloForm.textContent = "Editar transação";
+  botaoSalvar.textContent = "Salvar alterações";
+  botaoCancelar.hidden = false;
+  mensagem.textContent = "";
+
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function sairDoModoEdicao() {
+  idEditando = null;
+
+  form.reset();
+  inputData.value = hojeISO();
+
+  tituloForm.textContent = "Nova transação";
+  botaoSalvar.textContent = "Adicionar";
+  botaoCancelar.hidden = true;
+}
+
+botaoCancelar.addEventListener("click", () => {
+  sairDoModoEdicao();
+  mensagem.textContent = "";
+});
+
 /* ---------- Transações do mês ---------- */
 
 function criarLinhaTransacao(transacao) {
@@ -141,6 +181,11 @@ function criarLinhaTransacao(transacao) {
   );
 
   const acoes = criarElemento("span", "linha-acoes");
+
+  const editar = criarElemento("button", "secundario pequeno", "Editar");
+  editar.type = "button";
+  editar.addEventListener("click", () => iniciarEdicao(transacao));
+  acoes.appendChild(editar);
 
   if (transacao.fixa) {
     const parar = criarElemento("button", "secundario pequeno", "Parar de repetir");
@@ -181,6 +226,9 @@ async function excluirTransacao(id) {
 
   const resposta = await fetch(`/transacoes/${id}`, { method: "DELETE" });
   if (resposta.ok) {
+    if (id === idEditando) {
+      sairDoModoEdicao();
+    }
     atualizarMes();
   }
 }
@@ -339,10 +387,12 @@ formMeta.addEventListener("submit", async (evento) => {
   }
 });
 
-/* ---------- Nova transação ---------- */
+/* ---------- Salvar transação (nova ou editada) ---------- */
 
 form.addEventListener("submit", async (evento) => {
   evento.preventDefault();
+
+  const editando = idEditando !== null;
 
   const corpo = {
     descricao: document.getElementById("descricao").value,
@@ -352,21 +402,28 @@ form.addEventListener("submit", async (evento) => {
     fixa: document.getElementById("fixa").checked,
   };
 
-  const resposta = await fetch("/transacoes/", {
-    method: "POST",
+  const url = editando ? `/transacoes/${idEditando}` : "/transacoes/";
+  const metodo = editando ? "PUT" : "POST";
+
+  const resposta = await fetch(url, {
+    method: metodo,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(corpo),
   });
 
   if (resposta.ok) {
-    const criada = await resposta.json();
-    mensagem.textContent = criada.categoria_nome
-      ? `Adicionado em ${criada.categoria_nome}`
-      : "Adicionado!";
+    const salva = await resposta.json();
 
-    form.reset();
-    inputData.value = hojeISO();
-    inputMes.value = criada.data.slice(0, 7);
+    if (editando) {
+      mensagem.textContent = "Transação atualizada!";
+    } else {
+      mensagem.textContent = salva.categoria_nome
+        ? `Adicionado em ${salva.categoria_nome}`
+        : "Adicionado!";
+    }
+
+    sairDoModoEdicao();
+    inputMes.value = salva.data.slice(0, 7);
     atualizarMes();
   } else {
     const erro = await resposta.json();

@@ -62,7 +62,7 @@
     </section>
 
     <section class="painel">
-      <h2>Nova transação</h2>
+      <h2 id="titulo-form">Nova transação</h2>
       <form id="form-transacao">
         <input type="text" id="descricao" placeholder="Descrição (ex: Uber)" maxlength="100" required>
         <input type="number" id="valor" placeholder="Valor" step="0.01" min="0.01" required>
@@ -72,7 +72,8 @@
         </select>
         <input type="date" id="data" required>
         <label><input type="checkbox" id="fixa"> Fixa (repete todo mês)</label>
-        <button type="submit">Adicionar</button>
+        <button type="submit" id="btn-salvar">Adicionar</button>
+        <button type="button" id="btn-cancelar" class="secundario" hidden>Cancelar</button>
       </form>
       <p id="mensagem"></p>
     </section>
