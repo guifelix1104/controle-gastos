@@ -9,8 +9,8 @@ from app.database import get_db
 router = APIRouter(prefix="/metas", tags=["Metas"])
 
 
-def montar_saida(meta: models.Meta) -> dict:
-    hoje = date.today()
+def montar_saida(meta: models.Meta, hoje: date | None = None) -> dict:
+    hoje = hoje or date.today()
 
     faltante = round(max(meta.valor_alvo - meta.valor_guardado, 0), 2)
     progresso = min(meta.valor_guardado / meta.valor_alvo * 100, 100)

@@ -7,6 +7,7 @@ Aplicação web para controlar gastos mensais e planejar objetivos financeiros. 
 ## Funcionalidades
 
 - **Renda e gastos:** cadastro de entradas e saídas, com filtro por mês.
+- **Edição pela interface:** qualquer transação pode ser editada ou apagada direto na lista do mês.
 - **Categorização automática:** a descrição do gasto (ex.: "Uber", "Netflix", "Mercado") é comparada com palavras-chave e a categoria é definida sozinha. Se nenhuma palavra bater, vai para "Outros". A categoria também pode ser informada manualmente.
 - **Resumo do mês:** total de renda, total de gastos, saldo e gráfico de pizza por categoria.
 - **Gastos fixos recorrentes:** transações marcadas como fixas (aluguel, assinaturas, salário) podem ser geradas no mês seguinte com um clique, sem duplicar. Também é possível parar a repetição.
@@ -20,6 +21,7 @@ Aplicação web para controlar gastos mensais e planejar objetivos financeiros. 
 - **Pydantic** (validação dos dados)
 - **HTML, CSS e JavaScript** (interface)
 - **Chart.js** (gráfico de pizza)
+- **pytest** (testes automatizados)
 
 ## Como rodar (Windows)
 
@@ -41,6 +43,16 @@ Depois, acesse:
 
 O banco de dados (`gastos.db`) é criado automaticamente na primeira execução, já com as categorias padrão.
 
+## Testes
+
+Os testes usam `pytest` e um banco de dados temporário em memória (não tocam no `gastos.db`). Com o ambiente virtual ativo:
+
+```
+pytest
+```
+
+Eles cobrem a categorização automática, o CRUD de transações, os gastos fixos recorrentes, o resumo mensal e o cálculo das metas.
+
 ## Estrutura do projeto
 
 ```
@@ -61,7 +73,14 @@ controle-gastos/
 │       ├── index.html
 │       ├── style.css
 │       └── app.js
+├── tests/
+│   ├── conftest.py        # banco temporário e cliente de teste
+│   ├── test_categorizador.py
+│   ├── test_transacoes.py
+│   ├── test_resumo.py
+│   └── test_metas.py
 ├── screenshots/
+├── pytest.ini
 ├── requirements.txt
 └── README.md
 ```
@@ -72,6 +91,7 @@ controle-gastos/
 |---|---|---|
 | POST | `/transacoes/` | Cria uma transação (categoria automática se não informada) |
 | GET | `/transacoes/?mes=AAAA-MM` | Lista as transações do mês |
+| GET | `/transacoes/{id}` | Busca uma transação |
 | PUT | `/transacoes/{id}` | Edita uma transação |
 | PATCH | `/transacoes/{id}/fixa` | Liga ou desliga a repetição mensal |
 | DELETE | `/transacoes/{id}` | Apaga uma transação |
@@ -81,6 +101,7 @@ controle-gastos/
 | POST | `/metas/` | Cria uma meta |
 | GET | `/metas/` | Lista as metas com progresso e valor mensal sugerido |
 | POST | `/metas/{id}/depositar` | Registra um valor guardado na meta |
+| DELETE | `/metas/{id}` | Apaga uma meta |
 
 ## Como funciona a categorização
 
@@ -88,12 +109,12 @@ Cada categoria tem uma lista de palavras-chave. A descrição do gasto é normal
 
 ## Próximos passos
 
-- [ ] Editar transações pela interface
+- [x] Editar transações pela interface
+- [x] Testes automatizados
 - [ ] Login e múltiplos usuários
 - [ ] Importar extrato bancário (CSV)
 - [ ] Categorias e palavras-chave personalizadas
 - [ ] Valores monetários com `Decimal` ou centavos
-- [ ] Testes automatizados
 - [ ] Deploy online
 
 ## Autor
