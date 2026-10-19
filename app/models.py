@@ -42,3 +42,21 @@ class Meta(Base):
     valor_alvo: Mapped[float]
     valor_guardado: Mapped[float] = mapped_column(default=0.0)
     prazo: Mapped[date]
+
+
+    # --- Usuários (Etapa 9) ---
+from datetime import datetime, timezone  # noqa: E402
+
+from sqlalchemy import DateTime, String  # noqa: E402
+from sqlalchemy.orm import Mapped, mapped_column  # noqa: E402
+
+
+class Usuario(Base):
+    __tablename__ = "usuarios"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
+    senha_hash: Mapped[str] = mapped_column(String(255))
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
