@@ -1,13 +1,18 @@
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+import os
 
-from app import models  # noqa: F401  (garante que as tabelas sejam conhecidas)
-from app.database import Base, get_db
-from app.main import app
-from app.seed import criar_categorias_padrao
+# Precisa vir antes de importar o app (o app exige uma SECRET_KEY)
+os.environ.setdefault("SECRET_KEY", "chave-usada-apenas-nos-testes-do-controle-de-gastos")
+
+import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from sqlalchemy import create_engine  # noqa: E402
+from sqlalchemy.orm import sessionmaker  # noqa: E402
+from sqlalchemy.pool import StaticPool  # noqa: E402
+
+from app import models  # noqa: E402,F401
+from app.database import Base, get_db  # noqa: E402
+from app.main import app  # noqa: E402
+from app.seed import criar_categorias_padrao  # noqa: E402
 
 
 @pytest.fixture()
